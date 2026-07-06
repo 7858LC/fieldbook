@@ -1,0 +1,306 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ─── AUTH (NextAuth required) ────────────────────────────────────────────────
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ─── MULTI-TENANT ROOT ───────────────────────────────────────────────────────
+
+// One Business per vendor. All operational data scopes to this.
+model Business {
+  id           String    @id @default(cuid())
+  name         String
+  slug         String    @unique  // used in /q/[slug]/[token] for branded pages
+  vertical     String    @default("landscaping")
+  logoUrl      String?
+  phone        String?
+  email        String?
+  address      String?
+  plan         String    @default("trial")   // trial | fieldbook | leadflow
+  trialEndsAt  DateTime?
+  stripeCustomerId String?
+  createdAt    DateTime  @default(now())
+
+  users            User[]
+  customers        Customer[]
+  serviceTemplates ServiceTemplate[]
+  quotes           Quote[]
+  jobs             Job[]
+  crewMembers      CrewMember[]
+  leads            Lead[]
+  referralsOut     Referral[]       @relation("ReferralsOut")
+  referralsIn      Referral[]       @relation("ReferralsIn")
+  insights         VendorInsight[]
+  serviceHistory   ServiceHistory[]
+}
+
+model User {
+  id            String    @id @default(cuid())
+  businessId    String?   // null only during initial onboarding
+  role          String    @default("OWNER")  // OWNER | AGENT
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?
+  createdAt     DateTime  @default(now())
+
+  business  Business? @relation(fields: [businessId], references: [id])
+  accounts  Account[]
+  sessions  Session[]
+}
+
+// ─── VENDOR OPERATIONS ───────────────────────────────────────────────────────
+
+model Customer {
+  id         String  @id @default(cuid())
+  businessId String
+  name       String
+  phone      String?
+  email      String?
+  address    String?
+
+  business Business @relation(fields: [businessId], references: [id])
+  quotes   Quote[]
+  jobs     Job[]
+}
+
+model ServiceTemplate {
+  id                  String @id @default(cuid())
+  businessId          String
+  name                String
+  unit                String @default("flat")
+  defaultLaborRate    Float  @default(0)
+  defaultMaterialCost Float  @default(0)
+
+  business  Business   @relation(fields: [businessId], references: [id])
+  lineItems LineItem[]
+}
+
+model Quote {
+  id             String    @id @default(cuid())
+  businessId     String
+  customerId     String
+  leadId         String?   @unique  // set if quote originated from a Lead
+  status         String    @default("draft")  // draft | sent | accepted | declined
+  notes          String?
+  totalEstimated Float     @default(0)
+  createdAt      DateTime  @default(now())
+  sentAt         DateTime?
+  shareToken     String?   @unique
+
+  business  Business   @relation(fields: [businessId], references: [id])
+  customer  Customer   @relation(fields: [customerId], references: [id])
+  lead      Lead?      @relation(fields: [leadId], references: [id])
+  lineItems LineItem[]
+  job       Job?
+}
+
+model LineItem {
+  id                String  @id @default(cuid())
+  quoteId           String
+  serviceTemplateId String?
+  name              String
+  unit              String  @default("flat")
+  quantity          Float   @default(1)
+  laborRate         Float   @default(0)
+  materialCost      Float   @default(0)
+  total             Float   @default(0)
+
+  quote           Quote            @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  serviceTemplate ServiceTemplate? @relation(fields: [serviceTemplateId], references: [id])
+}
+
+model Job {
+  id                 String    @id @default(cuid())
+  businessId         String
+  customerId         String
+  quoteId            String?   @unique
+  status             String    @default("scheduled")  // scheduled | in_progress | completed | cancelled
+  scheduledDate      DateTime?
+  startedAt          DateTime?
+  completedAt        DateTime?
+  estimatedCost      Float     @default(0)
+  actualLaborCost    Float     @default(0)
+  actualMaterialCost Float     @default(0)
+  notes              String?
+
+  business       Business      @relation(fields: [businessId], references: [id])
+  customer       Customer      @relation(fields: [customerId], references: [id])
+  quote          Quote?        @relation(fields: [quoteId], references: [id])
+  checkIns       CrewCheckIn[]
+  invoice        Invoice?
+  serviceHistory ServiceHistory?
+}
+
+model CrewMember {
+  id         String @id @default(cuid())
+  businessId String
+  name       String
+
+  business Business      @relation(fields: [businessId], references: [id])
+  checkIns CrewCheckIn[]
+}
+
+model CrewCheckIn {
+  id           String    @id @default(cuid())
+  jobId        String
+  crewMemberId String
+  checkInAt    DateTime  @default(now())
+  checkOutAt   DateTime?
+
+  job        Job        @relation(fields: [jobId], references: [id])
+  crewMember CrewMember @relation(fields: [crewMemberId], references: [id])
+}
+
+model Invoice {
+  id                   String    @id @default(cuid())
+  jobId                String    @unique
+  amount               Float
+  status               String    @default("unpaid")  // unpaid | paid | refunded
+  stripePaymentIntent  String?
+  stripePaymentLink    String?
+  shareToken           String?   @unique  // for public /pay/[token] page
+  sentAt               DateTime?
+  paidAt               DateTime?
+  createdAt            DateTime  @default(now())
+
+  job Job @relation(fields: [jobId], references: [id])
+}
+
+// ─── DEMAND SIDE (UzimzAmka asset) ───────────────────────────────────────────
+
+// Homeowners enter the UzimzAmka network via quote approval pages.
+// They are NOT the vendor's customer record — they are a platform asset.
+model Homeowner {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  phone     String?
+  address   String?
+  zipCode   String?
+  source    String   @default("quote_approval")  // quote_approval | direct | referral
+  createdAt DateTime @default(now())
+
+  leads          Lead[]
+  serviceHistory ServiceHistory[]
+}
+
+// Records each completed job a homeowner has received through the platform.
+model ServiceHistory {
+  id          String   @id @default(cuid())
+  homeownerId String
+  businessId  String
+  jobId       String?  @unique
+  serviceType String?
+  completedAt DateTime
+  amount      Float
+  rating      Int?     // 1–5, homeowner rates after completion
+
+  homeowner Homeowner @relation(fields: [homeownerId], references: [id])
+  business  Business  @relation(fields: [businessId], references: [id])
+  job       Job?      @relation(fields: [jobId], references: [id])
+}
+
+// ─── LEADFLOW ────────────────────────────────────────────────────────────────
+
+// A lead is delivered exclusively to one vendor.
+// It can originate from a Homeowner or be manually created.
+model Lead {
+  id          String    @id @default(cuid())
+  businessId  String
+  homeownerId String?
+  status      String    @default("new")  // new | contacted | quoted | won | lost
+  serviceType String
+  description String?
+  address     String?
+  zipCode     String?
+  exclusive   Boolean   @default(true)
+  source      String    @default("leadflow")  // leadflow | referral | manual
+  createdAt   DateTime  @default(now())
+  expiresAt   DateTime?
+
+  business  Business   @relation(fields: [businessId], references: [id])
+  homeowner Homeowner? @relation(fields: [homeownerId], references: [id])
+  quote     Quote?
+}
+
+// ─── CROSS-VENDOR REFERRALS ───────────────────────────────────────────────────
+
+// Vendor A can't do a job → refers to Vendor B → UzimzAmka clips a fee.
+model Referral {
+  id               String   @id @default(cuid())
+  fromBusinessId   String
+  toBusinessId     String
+  serviceType      String
+  description      String?
+  status           String   @default("pending")  // pending | accepted | completed | declined
+  feeAmount        Float    @default(0)
+  feePaid          Boolean  @default(false)
+  createdAt        DateTime @default(now())
+
+  fromBusiness Business @relation("ReferralsOut", fields: [fromBusinessId], references: [id])
+  toBusiness   Business @relation("ReferralsIn", fields: [toBusinessId], references: [id])
+}
+
+// ─── VENDOR INTELLIGENCE ──────────────────────────────────────────────────────
+
+// Periodic snapshots drive the dashboard and the LeadFlow upsell trigger.
+model VendorInsight {
+  id                   String   @id @default(cuid())
+  businessId           String
+  period               String   // "2026-Q2"
+  quoteCount           Int      @default(0)
+  jobCount             Int      @default(0)
+  closeRate            Float    @default(0)   // quotes accepted / quotes sent
+  avgJobValue          Float    @default(0)
+  totalRevenue         Float    @default(0)
+  estimatedLeakAmount  Float    @default(0)   // money left on table (overruns + unbilled)
+  narrative            String?  // AI-generated insight text
+  createdAt            DateTime @default(now())
+
+  business Business @relation(fields: [businessId], references: [id])
+
+  @@unique([businessId, period])
+}
