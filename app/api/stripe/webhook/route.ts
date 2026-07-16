@@ -1,8 +1,7 @@
+﻿export const dynamic = "force-dynamic"
 import { NextRequest, NextResponse } from "next/server"
 import { getStripe } from "@/lib/stripe"
 import { prisma } from "@/lib/db"
-
-export const config = { api: { bodyParser: false } }
 
 export async function POST(req: NextRequest) {
   const body = await req.text()
@@ -32,3 +31,4 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({ received: true })
 }
+

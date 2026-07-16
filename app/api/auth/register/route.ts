@@ -1,3 +1,4 @@
+﻿export const dynamic = "force-dynamic"
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 import bcrypt from "bcryptjs"
@@ -55,3 +56,4 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({ ok: true, businessId: business.id })
 }
+

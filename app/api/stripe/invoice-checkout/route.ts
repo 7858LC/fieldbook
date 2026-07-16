@@ -1,3 +1,4 @@
+﻿export const dynamic = "force-dynamic"
 import { NextRequest, NextResponse } from "next/server"
 import { getStripe } from "@/lib/stripe"
 import { prisma } from "@/lib/db"
@@ -34,7 +35,7 @@ export async function POST(req: NextRequest) {
   const shareToken = crypto.randomBytes(24).toString("hex")
   const description = invoice.job.quote
     ? `Services for ${invoice.job.customer.name}`
-    : `Invoice — ${invoice.job.customer.name}`
+    : `Invoice â€” ${invoice.job.customer.name}`
 
   const checkoutSession = await getStripe().checkout.sessions.create({
     mode: "payment",
@@ -64,3 +65,4 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({ payUrl: `${process.env.NEXTAUTH_URL}/pay/${shareToken}` })
 }
+

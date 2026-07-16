@@ -1,3 +1,4 @@
+﻿export const dynamic = "force-dynamic"
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 import { requireSession } from "@/lib/session"
@@ -36,3 +37,4 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({ id: job.id })
 }
+

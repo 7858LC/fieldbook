@@ -1,3 +1,4 @@
+﻿export const dynamic = "force-dynamic"
 import { NextRequest, NextResponse } from "next/server"
 import { renderToBuffer } from "@react-pdf/renderer"
 import { z } from "zod"
@@ -44,3 +45,4 @@ export async function POST(req: NextRequest) {
     },
   })
 }
+

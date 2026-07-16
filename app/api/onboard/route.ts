@@ -1,3 +1,4 @@
+﻿export const dynamic = "force-dynamic"
 import { NextRequest, NextResponse } from "next/server"
 import { requireSession } from "@/lib/session"
 import { prisma } from "@/lib/db"
@@ -44,3 +45,4 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({ ok: true })
 }
+
