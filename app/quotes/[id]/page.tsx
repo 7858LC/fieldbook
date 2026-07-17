@@ -34,7 +34,7 @@ export default async function QuoteDetailPage({ params }: { params: Promise<{ id
       <main className="max-w-2xl mx-auto px-4 py-6 space-y-5">
         <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
           <div className="px-5 py-3 border-b border-gray-100 text-sm font-medium text-gray-500">Line Items</div>
-          {quote.lineItems.map((item: { id: string; name: string; quantity: number; unit: string; total: number }) => (
+          {quote.lineItems.map((item: { id: string; name: string; quantity: number; unit: string; total: number; laborRate: number; materialCost: number }) => (
             <div key={item.id} className="px-5 py-4 border-b border-gray-50 flex items-center justify-between">
               <div>
                 <div className="text-sm font-medium text-gray-900">{item.name}</div>
