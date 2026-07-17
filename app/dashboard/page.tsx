@@ -114,7 +114,7 @@ export default async function DashboardPage() {
             <div className="px-5 py-10 text-center text-gray-400 text-sm">No jobs yet. Start with a quote.</div>
           ) : (
             <ul className="divide-y divide-gray-50">
-              {recentJobs.map(job => (
+              {recentJobs.map((job: { id: string; status: string; scheduledDate: Date | null; customer: { name: string } }) => (
                 <li key={job.id}>
                   <Link href={`/jobs/${job.id}`} className="flex items-center justify-between px-5 py-4 hover:bg-gray-50">
                     <div>
