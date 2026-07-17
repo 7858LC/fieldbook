@@ -43,7 +43,7 @@ export default async function ClientQuotePage({ params }: { params: Promise<{ to
 
           {/* Line items */}
           <div className="divide-y divide-gray-100">
-            {quote.lineItems.map(item => (
+            {quote.lineItems.map((item: { id: string; name: string; quantity: number; unit: string; total: number }) => (
               <div key={item.id} className="px-6 py-4 flex justify-between items-start">
                 <div>
                   <div className="text-sm font-medium text-gray-900">{item.name}</div>

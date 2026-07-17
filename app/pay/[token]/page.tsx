@@ -47,7 +47,7 @@ export default async function PayPage({
 
           {invoice.job.quote && (
             <div className="divide-y divide-gray-100">
-              {invoice.job.quote.lineItems.map(item => (
+              {invoice.job.quote.lineItems.map((item: { id: string; name: string; quantity: number; unit: string; total: number }) => (
                 <div key={item.id} className="px-6 py-4 flex justify-between items-start">
                   <div>
                     <div className="text-sm font-medium text-gray-900">{item.name}</div>

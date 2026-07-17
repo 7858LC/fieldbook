@@ -40,7 +40,7 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
         {invoice.job.quote && (
           <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
             <div className="px-5 py-3 border-b border-gray-100 text-sm font-medium text-gray-500">Services</div>
-            {invoice.job.quote.lineItems.map(item => (
+            {invoice.job.quote.lineItems.map((item: { id: string; name: string; quantity: number; unit: string; total: number }) => (
               <div key={item.id} className="px-5 py-3 flex items-center justify-between border-b border-gray-50 last:border-0">
                 <div className="text-sm text-gray-700">{item.name} × {item.quantity}</div>
                 <div className="text-sm font-medium text-gray-900">${item.total.toFixed(2)}</div>
