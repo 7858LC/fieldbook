@@ -22,6 +22,10 @@ export async function computeInsight(businessId: string) {
     prisma.invoice.findMany({ where: { job: { businessId }, status: "paid" } }),
   ])
 
+  if (!business) {
+    return { quoteCount: 0, jobCount: 0, closeRate: 0, avgJobValue: 0, totalRevenue: 0, estimatedLeakAmount: 0, narrative: null, period, benchmarkCloseRate: 0.6, benchmarkJobValue: 1400, vertical: getVertical("general") }
+  }
+
   const vc = getVertical(business?.vertical ?? "general")
 
   const sentQuotes = quotes.filter(q => ["sent", "accepted", "declined"].includes(q.status))

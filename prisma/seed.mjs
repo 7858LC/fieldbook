@@ -1,12 +1,8 @@
 import { PrismaClient } from "@prisma/client"
-import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3"
+import { PrismaPg } from "@prisma/adapter-pg"
 import { randomBytes } from "crypto"
-import path from "path"
-import { fileURLToPath } from "url"
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const dbPath = path.join(__dirname, "../dev.db")
-const adapter = new PrismaBetterSqlite3({ url: dbPath })
+const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL })
 const prisma = new PrismaClient({ adapter })
 
 // Simple bcrypt-compatible hash using node built-ins isn't available,
