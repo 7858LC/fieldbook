@@ -15,7 +15,7 @@ export default async function InvoicesPage() {
     include: { job: { include: { customer: true } } },
   })
 
-  const unpaidTotal = invoices.filter(i => i.status === "unpaid").reduce((s, i) => s + i.amount, 0)
+  const unpaidTotal = invoices.filter((i: { status: string }) => i.status === "unpaid").reduce((s: number, i: { amount: number }) => s + i.amount, 0)
 
   return (
     <div className="min-h-screen bg-gray-50">
